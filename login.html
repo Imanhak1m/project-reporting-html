@@ -12,10 +12,26 @@
 
 <button id="loginBtn">Login</button>
 
-<p id="error" style="color:red;"></p>
+<p id="error"></p>
 
-<script src="js/firebase.js"></script>
-<script type="module" src="js/login.js"></script>
+<script type="module">
+  import { auth } from "./js/firebase.js";
+  import { signInWithEmailAndPassword } from 
+    "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        window.location.href = "dashboard.html";
+      })
+      .catch(err => {
+        document.getElementById("error").innerText = err.message;
+      });
+  });
+</script>
 
 </body>
 </html>
