@@ -1,1 +1,32 @@
+body.dark {
+  background: #121212;
+  font-family: Arial, sans-serif;
+  color: #fff;
+}
+
+.login-container {
+  width: 320px;
+  margin: 120px auto;
+  padding: 30px;
+  background: #1e1e1e;
+  border-radius: 8px;
+}
+
+input, button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+button {
+  background: #3b82f6;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.error {
+  color: #ff6b6b;
+  margin-top: 10px;
+}
 
