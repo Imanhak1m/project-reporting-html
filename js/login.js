@@ -1,12 +1,12 @@
 import { auth } from "./firebase.js";
 import { signInWithEmailAndPassword } from
-  "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+  "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const form = document.getElementById("loginForm");
 const errorText = document.getElementById("loginError");
 
 form.addEventListener("submit", async (e) => {
-  e.preventDefault(); // ⛔ stop page reload
+  e.preventDefault();
 
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -15,6 +15,7 @@ form.addEventListener("submit", async (e) => {
     await signInWithEmailAndPassword(auth, email, password);
     window.location.href = "dashboard.html";
   } catch (error) {
+    console.error("Login error:", error);
     errorText.textContent = error.message;
   }
 });
