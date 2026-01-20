@@ -1,20 +1,9 @@
-import { auth } from "./firebase.js";
-import { signOut, onAuthStateChanged } from
-  "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const welcomeText = document.getElementById("welcomeText");
-const logoutBtn = document.getElementById("logoutBtn");
+const auth = getAuth();
 
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "index.html";
-  } else {
-    welcomeText.textContent = "Welcome Admin";
-  }
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  signOut(auth).then(() => {
+    window.location.href = "login.html"; // ✅ relative path
+  });
 });
-
-logoutBtn.addEventListener("click", async () => {
-  await signOut(auth);
-  window.location.href = "index.html";
-});
-
