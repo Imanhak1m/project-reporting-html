@@ -1,37 +1,111 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard</title>
-  <link rel="stylesheet" href="css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body class="dark">
-
-  <h1>Dashboard</h1>
-  <p id="welcomeText">Loading...</p>
-
-  <button id="logoutBtn">Logout</button>
-
-  <hr>
-
-  <div id="stats">
-    <div class="card">
-      <h3>Total Projects</h3>
-      <p id="projectCount">0</p>
+    <div class="header">
+        <h1>Project Dashboard</h1>
+        <div class="header-right">
+            <p id="welcomeText">Loading...</p>
+            <button id="logoutBtn" class="btn-secondary">Logout</button>
+        </div>
     </div>
-  </div>
 
-  <h2>Projects</h2>
-  <div id="projectList"></div>
+    <hr>
 
-<script type="module" src="./js/firebase.js"></script>
-<script type="module" src="./js/dashboard-auth.js"></script>
-<script type="module" src="./js/projects.js"></script>
+    <div id="stats">
+        <div class="card">
+            <h3>Total Projects</h3>
+            <p id="projectCount" class="stat-number">0</p>
+        </div>
+    </div>
 
+    <div class="projects-section">
+        <div class="section-header">
+            <h2>Projects</h2>
+            <button id="addProjectBtn" class="btn-primary">+ Add New Project</button>
+        </div>
 
+        <!-- Project Form (Hidden by default) -->
+        <div id="projectFormContainer" class="form-container" style="display: none;">
+            <div class="form-header">
+                <h3 id="formTitle">Add New Project</h3>
+                <button id="closeFormBtn" class="btn-close">✕</button>
+            </div>
+            <form id="projectForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="projectTitle">Project Title *</label>
+                        <input type="text" id="projectTitle" name="projectTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Status *</label>
+                        <select id="status" name="status" required>
+                            <option value="BM">Belum Mula</option>
+                            <option value="SD">Sedang Dilaksanakan</option>
+                            <option value="SL">Selesai</option>
+                            <option value="TG">Tertangguh</option>
+                        </select>
+                    </div>
+                </div>
 
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="contractor">Contractor *</label>
+                        <input type="text" id="contractor" name="contractor" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="personInCharge">Person In Charge *</label>
+                        <input type="text" id="personInCharge" name="personInCharge" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="allocationSource">Allocation Source *</label>
+                        <input type="text" id="allocationSource" name="allocationSource" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="costOfWork">Cost of Work (RM) *</label>
+                        <input type="number" id="costOfWork" name="costOfWork" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="departmentBudget">Department Budget (RM) *</label>
+                        <input type="number" id="departmentBudget" name="departmentBudget" step="0.01" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="driveFolderUrl">Google Drive Folder URL</label>
+                    <input type="url" id="driveFolderUrl" name="driveFolderUrl" placeholder="https://drive.google.com/drive/folders/...">
+                    <small>Paste the Google Drive folder link containing project documents</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" name="notes" rows="3"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" id="cancelFormBtn" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Project</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Projects List -->
+        <div id="projectList"></div>
+    </div>
+
+    <script type="module" src="./js/firebase.js"></script>
+    <script type="module" src="./js/dashboard-auth.js"></script>
+    <script type="module" src="./js/projects.js"></script>
 </body>
 </html>
-
-
