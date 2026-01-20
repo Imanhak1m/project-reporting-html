@@ -1,29 +1,24 @@
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { auth } from "./firebase.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-const auth = getAuth();
+window.addEventListener("DOMContentLoaded", () => {
 
-// ✅ Protect dashboard (redirect if not logged in)
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    window.location.href = "index.html"; // back to login
-  } else {
-    const welcome = document.getElementById("welcomeText");
-    if (welcome) {
-      welcome.innerText = "Welcome " + (user.email || "User");
+  // Protect dashboard
+  onAuthStateChanged(auth, (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+    } else {
+      document.getElementById("welcomeText").innerText =
+        "Welcome " + user.email;
     }
-  }
-});
+  });
 
-// ✅ Logout button
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
+  // Logout
+  const logoutBtn = document.getElementById("logoutBtn");
   logoutBtn.addEventListener("click", () => {
     signOut(auth).then(() => {
-      window.location.href = "index.html"; // login page
+      window.location.href = "index.html";
     });
   });
-}
+
+});
