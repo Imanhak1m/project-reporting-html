@@ -1,16 +1,222 @@
-import { db } from "./firebase.js";
+import { db, auth } from "./firebase.js";
 import {
   collection,
-  getDocs
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
+  query,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 console.log("projects.js loaded");
 
-window.onload = async () => {
+let editingProjectId = null;
+
+// Status mapping
+const statusMap = {
+  BM: "Belum Mula",
+  SD: "Sedang Dilaksanakan",
+  SL: "Selesai",
+  TG: "Tertangguh"
+};
+
+// Load and display projects
+async function loadProjects() {
   try {
-    const snapshot = await getDocs(collection(db, "Projects")); // <-- FIXED
+    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    
     document.getElementById("projectCount").innerText = snapshot.size;
+    
+    const projectList = document.getElementById("projectList");
+    projectList.innerHTML = "";
+    
+    if (snapshot.empty) {
+      projectList.innerHTML = '<p class="no-projects">No projects yet. Click "Add New Project" to create one.</p>';
+      return;
+    }
+    
+    snapshot.forEach((docSnap) => {
+      const project = docSnap.data();
+      const projectCard = createProjectCard(docSnap.id, project);
+      projectList.appendChild(projectCard);
+    });
   } catch (err) {
-    console.error("Firestore error:", err);
+    console.error("Error loading projects:", err);
+    alert("Failed to load projects: " + err.message);
+  }
+}
+
+// Create project card HTML
+function createProjectCard(id, project) {
+  const card = document.createElement("div");
+  card.className = "project-card";
+  
+  const statusClass = project.status ? project.status.toLowerCase() : "bm";
+  
+  card.innerHTML = `
+    <div class="project-header">
+      <h3>${project.projectTitle || "Untitled Project"}</h3>
+      <span class="status-badge status-${statusClass}">${statusMap[project.status] || project.status}</span>
+    </div>
+    
+    <div class="project-details">
+      <div class="detail-row">
+        <strong>Contractor:</strong> ${project.contractor || "N/A"}
+      </div>
+      <div class="detail-row">
+        <strong>Person In Charge:</strong> ${project.personInCharge || "N/A"}
+      </div>
+      <div class="detail-row">
+        <strong>Allocation Source:</strong> ${project.allocationSource || "N/A"}
+      </div>
+      <div class="detail-row">
+        <strong>Cost of Work:</strong> RM ${formatNumber(project.costOfWork)}
+      </div>
+      <div class="detail-row">
+        <strong>Department Budget:</strong> RM ${formatNumber(project.departmentBudget)}
+      </div>
+      ${project.notes ? `<div class="detail-row"><strong>Notes:</strong> ${project.notes}</div>` : ""}
+      ${project.driveFolderUrl ? `
+        <div class="detail-row">
+          <strong>Documents:</strong> 
+          <a href="${project.driveFolderUrl}" target="_blank" class="drive-link">📁 Open Drive Folder</a>
+        </div>
+      ` : ""}
+    </div>
+    
+    <div class="project-actions">
+      <button class="btn-edit" onclick="editProject('${id}')">Edit</button>
+      <button class="btn-delete" onclick="deleteProject('${id}', '${project.projectTitle}')">Delete</button>
+    </div>
+  `;
+  
+  return card;
+}
+
+// Format number with commas
+function formatNumber(num) {
+  if (!num && num !== 0) return "0.00";
+  return Number(num).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// Show/hide form
+function showForm(isEdit = false) {
+  document.getElementById("projectFormContainer").style.display = "block";
+  document.getElementById("formTitle").innerText = isEdit ? "Edit Project" : "Add New Project";
+  if (!isEdit) {
+    document.getElementById("projectForm").reset();
+    editingProjectId = null;
+  }
+}
+
+function hideForm() {
+  document.getElementById("projectFormContainer").style.display = "none";
+  document.getElementById("projectForm").reset();
+  editingProjectId = null;
+}
+
+// Edit project
+window.editProject = async function(projectId) {
+  try {
+    const docRef = doc(db, "projects", projectId);
+    const snapshot = await getDocs(collection(db, "projects"));
+    
+    let projectData = null;
+    snapshot.forEach((docSnap) => {
+      if (docSnap.id === projectId) {
+        projectData = docSnap.data();
+      }
+    });
+    
+    if (!projectData) {
+      alert("Project not found!");
+      return;
+    }
+    
+    // Fill form with existing data
+    document.getElementById("projectTitle").value = projectData.projectTitle || "";
+    document.getElementById("contractor").value = projectData.contractor || "";
+    document.getElementById("personInCharge").value = projectData.personInCharge || "";
+    document.getElementById("allocationSource").value = projectData.allocationSource || "";
+    document.getElementById("costOfWork").value = projectData.costOfWork || "";
+    document.getElementById("departmentBudget").value = projectData.departmentBudget || "";
+    document.getElementById("status").value = projectData.status || "BM";
+    document.getElementById("driveFolderUrl").value = projectData.driveFolderUrl || "";
+    document.getElementById("notes").value = projectData.notes || "";
+    
+    editingProjectId = projectId;
+    showForm(true);
+  } catch (err) {
+    console.error("Error loading project:", err);
+    alert("Failed to load project: " + err.message);
   }
 };
+
+// Delete project
+window.deleteProject = async function(projectId, projectTitle) {
+  if (!confirm(`Are you sure you want to delete "${projectTitle}"?`)) {
+    return;
+  }
+  
+  try {
+    await deleteDoc(doc(db, "projects", projectId));
+    alert("Project deleted successfully!");
+    loadProjects();
+  } catch (err) {
+    console.error("Error deleting project:", err);
+    alert("Failed to delete project: " + err.message);
+  }
+};
+
+// Form submission
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  
+  const formData = {
+    projectTitle: document.getElementById("projectTitle").value.trim(),
+    contractor: document.getElementById("contractor").value.trim(),
+    personInCharge: document.getElementById("personInCharge").value.trim(),
+    allocationSource: document.getElementById("allocationSource").value.trim(),
+    costOfWork: Number(document.getElementById("costOfWork").value),
+    departmentBudget: Number(document.getElementById("departmentBudget").value),
+    status: document.getElementById("status").value,
+    driveFolderUrl: document.getElementById("driveFolderUrl").value.trim(),
+    notes: document.getElementById("notes").value.trim(),
+    updatedAt: serverTimestamp()
+  };
+  
+  try {
+    if (editingProjectId) {
+      // Update existing project
+      await updateDoc(doc(db, "projects", editingProjectId), formData);
+      alert("Project updated successfully!");
+    } else {
+      // Create new project
+      formData.createdAt = serverTimestamp();
+      formData.createdBy = auth.currentUser ? auth.currentUser.uid : "unknown";
+      await addDoc(collection(db, "projects"), formData);
+      alert("Project created successfully!");
+    }
+    
+    hideForm();
+    loadProjects();
+  } catch (err) {
+    console.error("Error saving project:", err);
+    alert("Failed to save project: " + err.message);
+  }
+}
+
+// Initialize
+window.addEventListener("load", () => {
+  loadProjects();
+  
+  // Form buttons
+  document.getElementById("addProjectBtn").addEventListener("click", () => showForm(false));
+  document.getElementById("closeFormBtn").addEventListener("click", hideForm);
+  document.getElementById("cancelFormBtn").addEventListener("click", hideForm);
+  document.getElementById("projectForm").addEventListener("submit", handleFormSubmit);
+});
