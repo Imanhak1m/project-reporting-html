@@ -1,3 +1,5 @@
+console.log("dashboard-auth.js loaded");
+
 import { auth } from "./firebase.js";
 import {
   onAuthStateChanged,
