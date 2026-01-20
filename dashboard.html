@@ -1,32 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
   <title>Dashboard</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-<body>
 
-<h1>Dashboard</h1>
-<p>Welcome Admin</p>
+<body class="dark">
 
-<button id="logout">Logout</button>
+  <h1>Dashboard</h1>
+  <p id="welcomeText">Loading...</p>
 
-<script type="module">
-  import { auth } from "./js/firebase.js";
-  import { onAuthStateChanged, signOut } from
-    "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+  <button id="logoutBtn">Logout</button>
 
-  onAuthStateChanged(auth, user => {
-    if (!user) {
-      window.location.href = "login.html";
-    }
-  });
+  <hr>
 
-  document.getElementById("logout").addEventListener("click", () => {
-    signOut(auth).then(() => {
-      window.location.href = "login.html";
-    });
-  });
-</script>
+  <div id="stats">
+    <div class="card">
+      <h3>Total Projects</h3>
+      <p id="projectCount">0</p>
+    </div>
+  </div>
+
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/dashboard-auth.js"></script>
+  <script type="module" src="js/projects.js"></script>
 
 </body>
 </html>
