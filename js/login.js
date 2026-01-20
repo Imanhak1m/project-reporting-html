@@ -6,7 +6,7 @@ const form = document.getElementById("loginForm");
 const errorText = document.getElementById("loginError");
 
 form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+  e.preventDefault(); // ⛔ stop page reload
 
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -15,6 +15,6 @@ form.addEventListener("submit", async (e) => {
     await signInWithEmailAndPassword(auth, email, password);
     window.location.href = "dashboard.html";
   } catch (error) {
-    errorText.textContent = "Invalid email or password";
+    errorText.textContent = error.message;
   }
 });
