@@ -4,6 +4,6 @@ const auth = getAuth();
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
   signOut(auth).then(() => {
-    window.location.href = "login.html"; // ✅ relative path
+    window.location.href = "index.html"; // ✅ relative path
   });
 });
