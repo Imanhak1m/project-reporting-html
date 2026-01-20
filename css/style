@@ -1,32 +1,22 @@
 body.dark {
   background: #121212;
+  color: #f1f1f1;
   font-family: Arial, sans-serif;
-  color: #fff;
-}
-
-.login-container {
-  width: 320px;
-  margin: 120px auto;
-  padding: 30px;
-  background: #1e1e1e;
-  border-radius: 8px;
+  padding: 20px;
 }
 
 input, button {
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
+  padding: 8px;
+  margin: 5px;
 }
 
 button {
-  background: #3b82f6;
-  border: none;
-  color: white;
   cursor: pointer;
 }
 
-.error {
-  color: #ff6b6b;
-  margin-top: 10px;
+.card {
+  background: #1e1e1e;
+  padding: 20px;
+  width: 200px;
+  border-radius: 8px;
 }
-
