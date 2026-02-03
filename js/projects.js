@@ -125,13 +125,19 @@ function formatNumber(num) {
 
 // Show/hide form
 function showForm(isEdit = false) {
-  document.getElementById("projectFormContainer").style.display = "block";
+  const formContainer = document.getElementById("projectFormContainer");
+  formContainer.style.display = "block";
   document.getElementById("formTitle").innerText = isEdit ? "Edit Project" : "Add New Project";
   if (!isEdit) {
     document.getElementById("projectForm").reset();
     document.getElementById("progressPercent").value = 0; // Default to 0%
     editingProjectId = null;
   }
+  
+  // Smooth scroll to form
+  setTimeout(() => {
+    formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
 }
 
 function hideForm() {
