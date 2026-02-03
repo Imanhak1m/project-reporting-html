@@ -50,17 +50,37 @@ async function loadProjects() {
   }
 }
 
+// Get progress color based on percentage
+function getProgressColor(percent) {
+  if (percent >= 75) return "#2e7d32"; // Green
+  if (percent >= 50) return "#1976d2"; // Blue
+  if (percent >= 25) return "#f57c00"; // Orange
+  return "#c62828"; // Red
+}
+
 // Create project card HTML
 function createProjectCard(id, project) {
   const card = document.createElement("div");
   card.className = "project-card";
   
   const statusClass = project.status ? project.status.toLowerCase() : "bm";
+  const progress = project.progressPercent !== undefined ? project.progressPercent : 0;
+  const progressColor = getProgressColor(progress);
   
   card.innerHTML = `
     <div class="project-header">
       <h3>${project.projectTitle || "Untitled Project"}</h3>
       <span class="status-badge status-${statusClass}">${statusMap[project.status] || project.status}</span>
+    </div>
+    
+    <div class="progress-section">
+      <div class="progress-label">
+        <span>Progress</span>
+        <span class="progress-value">${progress}%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: ${progress}%; background-color: ${progressColor};"></div>
+      </div>
     </div>
     
     <div class="project-details">
@@ -109,6 +129,7 @@ function showForm(isEdit = false) {
   document.getElementById("formTitle").innerText = isEdit ? "Edit Project" : "Add New Project";
   if (!isEdit) {
     document.getElementById("projectForm").reset();
+    document.getElementById("progressPercent").value = 0; // Default to 0%
     editingProjectId = null;
   }
 }
@@ -145,6 +166,7 @@ window.editProject = async function(projectId) {
     document.getElementById("costOfWork").value = projectData.costOfWork || "";
     document.getElementById("departmentBudget").value = projectData.departmentBudget || "";
     document.getElementById("status").value = projectData.status || "BM";
+    document.getElementById("progressPercent").value = projectData.progressPercent !== undefined ? projectData.progressPercent : 0;
     document.getElementById("driveFolderUrl").value = projectData.driveFolderUrl || "";
     document.getElementById("notes").value = projectData.notes || "";
     
@@ -176,6 +198,14 @@ window.deleteProject = async function(projectId, projectTitle) {
 async function handleFormSubmit(e) {
   e.preventDefault();
   
+  const progressValue = Number(document.getElementById("progressPercent").value);
+  
+  // Validate progress percentage
+  if (progressValue < 0 || progressValue > 100) {
+    alert("Progress must be between 0 and 100!");
+    return;
+  }
+  
   const formData = {
     projectTitle: document.getElementById("projectTitle").value.trim(),
     contractor: document.getElementById("contractor").value.trim(),
@@ -184,6 +214,7 @@ async function handleFormSubmit(e) {
     costOfWork: Number(document.getElementById("costOfWork").value),
     departmentBudget: Number(document.getElementById("departmentBudget").value),
     status: document.getElementById("status").value,
+    progressPercent: progressValue,
     driveFolderUrl: document.getElementById("driveFolderUrl").value.trim(),
     notes: document.getElementById("notes").value.trim(),
     updatedAt: serverTimestamp()
