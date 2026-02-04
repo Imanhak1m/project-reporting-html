@@ -25,7 +25,6 @@ form.addEventListener("submit", async (e) => {
   const email = document.getElementById("email").value.trim();
   const password = document.getElementById("password").value;
   const confirmPassword = document.getElementById("confirmPassword").value;
-  const role = document.getElementById("role").value;
   
   // Validation
   if (password.length < 8) {
@@ -35,11 +34,6 @@ form.addEventListener("submit", async (e) => {
   
   if (password !== confirmPassword) {
     errorText.textContent = "Passwords do not match";
-    return;
-  }
-  
-  if (!role) {
-    errorText.textContent = "Please select a role";
     return;
   }
   
@@ -63,7 +57,7 @@ form.addEventListener("submit", async (e) => {
       uid: user.uid,
       email: email,
       name: fullName,
-      role: role,
+      role: "user",
       createdAt: serverTimestamp()
     });
     
