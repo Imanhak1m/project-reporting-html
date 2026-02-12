@@ -10,10 +10,12 @@ import {
   query,
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 console.log("projects.js loaded");
 
 let editingProjectId = null;
+let isInitialized = false;
 
 // Status mapping
 const statusMap = {
@@ -23,15 +25,40 @@ const statusMap = {
   TG: "Tertangguh"
 };
 
+// Wait for auth state before loading projects
+function initializeProjects() {
+  console.log("Initializing projects...");
+  
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      console.log("User authenticated:", user.email);
+      if (!isInitialized) {
+        isInitialized = true;
+        loadProjects();
+      }
+    } else {
+      console.log("No user authenticated");
+      // User will be redirected by dashboard-auth.js
+    }
+  });
+}
+
 // Load and display projects
 async function loadProjects() {
+  console.log("Loading projects...");
+  const projectList = document.getElementById("projectList");
+  
   try {
+    // Show loading state
+    projectList.innerHTML = '<p style="text-align: center; padding: 20px;">Loading projects...</p>';
+    
     const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
     
+    console.log("Projects loaded:", snapshot.size);
+    
     document.getElementById("projectCount").innerText = snapshot.size;
     
-    const projectList = document.getElementById("projectList");
     projectList.innerHTML = "";
     
     if (snapshot.empty) {
@@ -41,12 +68,19 @@ async function loadProjects() {
     
     snapshot.forEach((docSnap) => {
       const project = docSnap.data();
+      console.log("Project:", docSnap.id, project);
       const projectCard = createProjectCard(docSnap.id, project);
       projectList.appendChild(projectCard);
     });
   } catch (err) {
     console.error("Error loading projects:", err);
-    alert("Failed to load projects: " + err.message);
+    projectList.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: #f44336;">
+        <p><strong>Failed to load projects</strong></p>
+        <p>${err.message}</p>
+        <p style="font-size: 0.9em; margin-top: 10px;">Check browser console for details</p>
+      </div>
+    `;
   }
 }
 
@@ -110,7 +144,7 @@ function createProjectCard(id, project) {
     
     <div class="project-actions">
       <button class="btn-edit" onclick="editProject('${id}')">Edit</button>
-      <button class="btn-delete" onclick="deleteProject('${id}', '${project.projectTitle}')">Delete</button>
+      <button class="btn-delete" onclick="deleteProject('${id}', '${(project.projectTitle || '').replace(/'/g, "\\'")}')">Delete</button>
     </div>
   `;
   
@@ -149,6 +183,7 @@ function hideForm() {
 // Edit project
 window.editProject = async function(projectId) {
   try {
+    console.log("Editing project:", projectId);
     const docRef = doc(db, "projects", projectId);
     const snapshot = await getDocs(collection(db, "projects"));
     
@@ -247,13 +282,27 @@ async function handleFormSubmit(e) {
   }
 }
 
-// Initialize
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeProjects);
+} else {
+  initializeProjects();
+}
+
+// Also set up event listeners when DOM is ready
 window.addEventListener("load", () => {
-  loadProjects();
+  console.log("Window loaded, setting up event listeners");
   
   // Form buttons
-  document.getElementById("addProjectBtn").addEventListener("click", () => showForm(false));
-  document.getElementById("closeFormBtn").addEventListener("click", hideForm);
-  document.getElementById("cancelFormBtn").addEventListener("click", hideForm);
-  document.getElementById("projectForm").addEventListener("submit", handleFormSubmit);
+  const addBtn = document.getElementById("addProjectBtn");
+  const closeBtn = document.getElementById("closeFormBtn");
+  const cancelBtn = document.getElementById("cancelFormBtn");
+  const form = document.getElementById("projectForm");
+  
+  if (addBtn) addBtn.addEventListener("click", () => showForm(false));
+  if (closeBtn) closeBtn.addEventListener("click", hideForm);
+  if (cancelBtn) cancelBtn.addEventListener("click", hideForm);
+  if (form) form.addEventListener("submit", handleFormSubmit);
+  
+  console.log("Event listeners set up");
 });
