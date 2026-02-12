@@ -8,26 +8,12 @@ import {
   doc,
   serverTimestamp,
   query,
-  orderBy,
-  where
+  orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 console.log("projects.js loaded");
 
 let editingProjectId = null;
-let currentUserRole = null;
-
-// Admin emails list
-const adminEmails = ['admin@test.com', 'PLBpdtbd@admin.com'];
-
-// Check if current user is admin
-function isAdmin(user) {
-  if (!user) return false;
-  // Check by email
-  if (adminEmails.includes(user.email)) return true;
-  // Role will be checked when user data is loaded
-  return currentUserRole === 'admin';
-}
 
 // Status mapping
 const statusMap = {
@@ -40,55 +26,10 @@ const statusMap = {
 // Load and display projects
 async function loadProjects() {
   try {
-    // Get current user
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      console.error("No user logged in");
-      return;
-    }
-    
-    // Get user's name from Firestore
-    let userName = null;
-    try {
-      const userQuery = query(collection(db, "users"), where("uid", "==", currentUser.uid));
-      const userSnapshot = await getDocs(userQuery);
-      if (!userSnapshot.empty) {
-        userName = userSnapshot.docs[0].data().name;
-        console.log("User name:", userName);
-      }
-    } catch (err) {
-      console.error("Error loading user name:", err);
-    }
-    
-    let q;
-    let needsClientSort = false;
-    
-    // Check if user is admin
-    if (isAdmin(currentUser)) {
-      // Admin sees ALL projects
-      q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
-      console.log("Loading all projects (admin view)");
-    } else if (userName) {
-      // Regular user sees only projects where personInCharge matches their name
-      // Remove orderBy to avoid composite index requirement - we'll sort on client side
-      q = query(
-        collection(db, "projects"), 
-        where("personInCharge", "==", userName)
-      );
-      needsClientSort = true;
-      console.log("Loading projects for:", userName);
-    } else {
-      console.error("Could not determine user name");
-      return;
-    }
-    
+    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
     const snapshot = await getDocs(q);
     
     document.getElementById("projectCount").innerText = snapshot.size;
-    
-    // Update label based on role
-    const label = isAdmin(currentUser) ? "All Projects" : "My Projects";
-    document.getElementById("projectCountLabel").innerText = label;
     
     const projectList = document.getElementById("projectList");
     projectList.innerHTML = "";
@@ -98,30 +39,11 @@ async function loadProjects() {
       return;
     }
     
-    // Convert to array and sort on client side if needed
-    let projects = [];
     snapshot.forEach((docSnap) => {
-      projects.push({
-        id: docSnap.id,
-        data: docSnap.data()
-      });
-    });
-    
-    // Sort by createdAt on client side for regular users
-    if (needsClientSort) {
-      projects.sort((a, b) => {
-        const timeA = a.data.createdAt?.toMillis() || 0;
-        const timeB = b.data.createdAt?.toMillis() || 0;
-        return timeB - timeA; // Descending order (newest first)
-      });
-    }
-    
-    // Display projects
-    projects.forEach(project => {
-      const projectCard = createProjectCard(project.id, project.data);
+      const project = docSnap.data();
+      const projectCard = createProjectCard(docSnap.id, project);
       projectList.appendChild(projectCard);
     });
-    
   } catch (err) {
     console.error("Error loading projects:", err);
     alert("Failed to load projects: " + err.message);
@@ -326,21 +248,7 @@ async function handleFormSubmit(e) {
 }
 
 // Initialize
-window.addEventListener("load", async () => {
-  // Load current user role from Firestore
-  const currentUser = auth.currentUser;
-  if (currentUser) {
-    try {
-      const userDoc = await getDocs(query(collection(db, "users"), where("uid", "==", currentUser.uid)));
-      if (!userDoc.empty) {
-        currentUserRole = userDoc.docs[0].data().role;
-        console.log("User role:", currentUserRole);
-      }
-    } catch (err) {
-      console.error("Error loading user role:", err);
-    }
-  }
-  
+window.addEventListener("load", () => {
   loadProjects();
   
   // Form buttons
