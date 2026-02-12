@@ -61,6 +61,7 @@ async function loadProjects() {
     }
     
     let q;
+    let needsClientSort = false;
     
     // Check if user is admin
     if (isAdmin(currentUser)) {
@@ -69,11 +70,12 @@ async function loadProjects() {
       console.log("Loading all projects (admin view)");
     } else if (userName) {
       // Regular user sees only projects where personInCharge matches their name
+      // Remove orderBy to avoid composite index requirement - we'll sort on client side
       q = query(
         collection(db, "projects"), 
-        where("personInCharge", "==", userName),
-        orderBy("createdAt", "desc")
+        where("personInCharge", "==", userName)
       );
+      needsClientSort = true;
       console.log("Loading projects for:", userName);
     } else {
       console.error("Could not determine user name");
@@ -96,11 +98,30 @@ async function loadProjects() {
       return;
     }
     
+    // Convert to array and sort on client side if needed
+    let projects = [];
     snapshot.forEach((docSnap) => {
-      const project = docSnap.data();
-      const projectCard = createProjectCard(docSnap.id, project);
+      projects.push({
+        id: docSnap.id,
+        data: docSnap.data()
+      });
+    });
+    
+    // Sort by createdAt on client side for regular users
+    if (needsClientSort) {
+      projects.sort((a, b) => {
+        const timeA = a.data.createdAt?.toMillis() || 0;
+        const timeB = b.data.createdAt?.toMillis() || 0;
+        return timeB - timeA; // Descending order (newest first)
+      });
+    }
+    
+    // Display projects
+    projects.forEach(project => {
+      const projectCard = createProjectCard(project.id, project.data);
       projectList.appendChild(projectCard);
     });
+    
   } catch (err) {
     console.error("Error loading projects:", err);
     alert("Failed to load projects: " + err.message);
