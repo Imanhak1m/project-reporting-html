@@ -68,6 +68,10 @@ async function loadProjects() {
     
     document.getElementById("projectCount").innerText = snapshot.size;
     
+    // Update label based on role
+    const label = isAdmin(currentUser) ? "All Projects" : "My Projects";
+    document.getElementById("projectCountLabel").innerText = label;
+    
     const projectList = document.getElementById("projectList");
     projectList.innerHTML = "";
     
