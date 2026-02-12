@@ -69,6 +69,10 @@
                         <label for="allocationSource">Allocation Source *</label>
                         <input type="text" id="allocationSource" name="allocationSource" required>
                     </div>
+                    <div class="form-group">
+                        <label for="progressPercent">Progress (%) *</label>
+                        <input type="number" id="progressPercent" name="progressPercent" min="0" max="100" value="0" required>
+                    </div>
                 </div>
 
                 <div class="form-row">
@@ -101,7 +105,9 @@
         </div>
 
         <!-- Projects List -->
-        <div id="projectList"></div>
+        <div id="projectList">
+            <p style="text-align: center; padding: 20px;">Loading projects...</p>
+        </div>
     </div>
 
     <script type="module" src="./js/firebase.js"></script>
