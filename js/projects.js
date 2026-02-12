@@ -47,6 +47,19 @@ async function loadProjects() {
       return;
     }
     
+    // Get user's name from Firestore
+    let userName = null;
+    try {
+      const userQuery = query(collection(db, "users"), where("uid", "==", currentUser.uid));
+      const userSnapshot = await getDocs(userQuery);
+      if (!userSnapshot.empty) {
+        userName = userSnapshot.docs[0].data().name;
+        console.log("User name:", userName);
+      }
+    } catch (err) {
+      console.error("Error loading user name:", err);
+    }
+    
     let q;
     
     // Check if user is admin
@@ -54,14 +67,17 @@ async function loadProjects() {
       // Admin sees ALL projects
       q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
       console.log("Loading all projects (admin view)");
-    } else {
-      // Regular user sees only their own projects
+    } else if (userName) {
+      // Regular user sees only projects where personInCharge matches their name
       q = query(
         collection(db, "projects"), 
-        where("createdBy", "==", currentUser.uid),
+        where("personInCharge", "==", userName),
         orderBy("createdAt", "desc")
       );
-      console.log("Loading user's projects only");
+      console.log("Loading projects for:", userName);
+    } else {
+      console.error("Could not determine user name");
+      return;
     }
     
     const snapshot = await getDocs(q);
