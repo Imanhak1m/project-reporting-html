@@ -8,12 +8,26 @@ import {
   doc,
   serverTimestamp,
   query,
-  orderBy
+  orderBy,
+  where
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 console.log("projects.js loaded");
 
 let editingProjectId = null;
+let currentUserRole = null;
+
+// Admin emails list
+const adminEmails = ['admin@test.com', 'PLBpdtbd@admin.com'];
+
+// Check if current user is admin
+function isAdmin(user) {
+  if (!user) return false;
+  // Check by email
+  if (adminEmails.includes(user.email)) return true;
+  // Role will be checked when user data is loaded
+  return currentUserRole === 'admin';
+}
 
 // Status mapping
 const statusMap = {
@@ -26,7 +40,30 @@ const statusMap = {
 // Load and display projects
 async function loadProjects() {
   try {
-    const q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+    // Get current user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.error("No user logged in");
+      return;
+    }
+    
+    let q;
+    
+    // Check if user is admin
+    if (isAdmin(currentUser)) {
+      // Admin sees ALL projects
+      q = query(collection(db, "projects"), orderBy("createdAt", "desc"));
+      console.log("Loading all projects (admin view)");
+    } else {
+      // Regular user sees only their own projects
+      q = query(
+        collection(db, "projects"), 
+        where("createdBy", "==", currentUser.uid),
+        orderBy("createdAt", "desc")
+      );
+      console.log("Loading user's projects only");
+    }
+    
     const snapshot = await getDocs(q);
     
     document.getElementById("projectCount").innerText = snapshot.size;
@@ -248,7 +285,21 @@ async function handleFormSubmit(e) {
 }
 
 // Initialize
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
+  // Load current user role from Firestore
+  const currentUser = auth.currentUser;
+  if (currentUser) {
+    try {
+      const userDoc = await getDocs(query(collection(db, "users"), where("uid", "==", currentUser.uid)));
+      if (!userDoc.empty) {
+        currentUserRole = userDoc.docs[0].data().role;
+        console.log("User role:", currentUserRole);
+      }
+    } catch (err) {
+      console.error("Error loading user role:", err);
+    }
+  }
+  
   loadProjects();
   
   // Form buttons
